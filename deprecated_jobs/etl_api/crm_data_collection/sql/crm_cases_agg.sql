@@ -1,0 +1,122 @@
+Select UsrCases.UsrCaseNumber                          as case_number,
+       UsrCases.Id                                     as case_row_id,
+       UsrCases.CreatedOn                              as date_created,
+       UsrCases.ModifiedOn                             as date_modified,
+       Account.Name                                    as account_name,
+       Account.UsrSoskaJproject                        as account_soska_project,
+       Account.UsrId1C                                 as account_id_1c,
+       UsrCases.UsrAccountinCaseId                     as account_id,
+       Country.Alpha2Code                              as country_cc,
+       UsrClientSegment.Name                           as account_segment,
+       Contact.Name                                    as owner_name,
+       cc.Name                                         as contact_name,
+       cc.Email                                        as contact_email,
+       UsrMainTaskinCase.UsrName                       as category_name,
+       UsrCaseSubCategory.Name                         as sub_category_name,
+       UsrCases.UsrStageincaseId                       as stage_id,
+       UsrStageInCase.UsrName                          as stage_name,
+       UsrCases.UsrCaseDescription                     as case_desc,
+       UsrCases.UsrResolution                          as case_resolution,
+       UsrCases.UsrClientFeedback                      as client_feedback,
+       UsrInitiatedByInCases.Name                      as initiated_by,
+       UsrPriorityincase.Name                          as case_priority,
+       UsrCases.UsrOfferedBudget                       as offered_budget,
+       UsrCases.UsrConfirmedBudget                     as confirmed_budget,
+       UsrCases.UsrOfferedCPC                          as offered_cpc,
+       UsrCases.UsrConfirmedCPC                        as confirmed_cpc,
+       coalesce(Currency.Code, Currency.Name)          as currency_1,
+       curr_2.Code                                     as currency_2,
+       UsrCases.UsrTableauTrafficBySourceDashboard     as tableau_traffic_by_source_dashboard,
+       UsrCases.UsrTableauSERPcompetitionDashboard     as tableau_serp_competition_dashboard,
+       UsrCases.UsrTableauRevenueAndBudgetDashboard    as tableau_revenue_and_budget_dashboard,
+       UsrCases.UsrTableauCPCsegmentation              as tableau_cpc_segmentation,
+       UsrCases.UsrTableauConversionDashboard          as tableau_conversion_dashboard,
+       UsrCases.UsrTableauAffiliateClientCPCanalysis   as tableau_affiliate_client_cpc_analysis,
+       UsrCases.UsrChangeGap                           as change_gap,
+       UsrCases.UsrAddNewAffiliateSources              as add_new_affiliate_sources,
+       UsrCases.UsrAllowAffiliateSources               as allow_affiliate_sources,
+       UsrCases.UsrAffiliateFlag32Forecast             as affiliate_flag_32_forecast,
+       UsrCases.UsrAddingMorePaidJobs                  as adding_more_paid_jobs,
+       UsrCases.UsrSOSKA_CPCinSimilarGroups            as soska_cpc_in_similar_groups,
+       UsrCases.UsrSetLowerCPCFlag32                   as set_lower_cpc_flag_32,
+       UsrCases.UsrSetHigherCPC                        as set_higher_cpc,
+       UsrCases.UsrOther                               as other,
+       UsrCases.UsrOtherDeatil                         as other_detail,
+       UsrCases.UsrTicket                              as ticket,
+       UsrCases.UsrCatego                              as catego,
+       UsrCases.UsrAddNewPPCsources                    as add_new_ppc_sources,
+       UsrCases.UsrPPCrecommendation                   as ppc_recommendation,
+       UsrCases.UsrPPCflag32Forecast                   as ppc_flag_32_forecast,
+       UsrCases.UsrAuctionAnalytics                    as auction_analytics,
+       UsrCases.UsrAuctionSegmentation                 as auction_segmentation,
+       UsrCases.UsrAuctionCampaignSettings             as auction_campaign_settings,
+       UsrCases.UsrWithoutReason                       as without_reason,
+       UsrCases.UsrNoAdditionalPaidJobsAvailable       as no_additional_paid_jobs_available,
+       UsrCases.UsrGapChangeNotApproved                as gap_change_not_approved,
+       UsrCases.UsrNotEnoughTrafficFromInternalSources as not_enough_traffic_from_internal_sources,
+       UsrCases.UsrAffiliateIsForbidden                as affiliate_is_forbidden,
+       UsrCases.UsrNoAdditionalBudget                  as no_additional_budget,
+       UsrCases.UsrRecommendedCPCtooExpensive          as recommended_cpc_too_expensive,
+       UsrCases.UsrCPAtooExpensive                     as cpa_too_expensive,
+       UsrCases.UsrOtherBlockers                       as other_blockers,
+       UsrCases.UsrOtherBlockersDetails                as other_blockers_details,
+       UsrCases.UsrMinCPCtooExpensive                  as min_cpc_too_expensive,
+       UsrCases.UsrPostbackURL                         as postback_url,
+       UsrCases.UsrUTMsource                           as utm_source,
+       UsrCases.UsrRegularConversion                   as regular_conversion,
+       UsrCases.UsrManualDataGathering                 as manual_data_gathering,
+       UsrCases.UsrAppcastAPI                          as appcast_api,
+       coalesce(Activities.email_cnt, 0)               as email_cnt,
+       coalesce(Activities.call_cnt, 0)                as call_cnt,
+       coalesce(Activities.task_cnt, 0)                as task_cnt,
+       coalesce(Activities.visit_cnt, 0)               as visit_cnt,
+       UsrCases.UsrLackOfTechTeamFreeResources         as lack_of_tech_team_free_resources,
+       UsrCases.UsrClientNotKnowHowToDo                as client_not_know_howtodo,
+       UsrCases.UsrTrackingIsProhibitedByPolicy        as tracking_is_prohibited_by_policy,
+       UsrCases.UsrLegalGPDR                           as legal_gdpr,
+       UsrCases.UsrCompetitor                          as blocker_competitor,
+       UsrCases.UsrTrackingMethodsComparison           as tracking_methods_comparison,
+       UsrCases.UsrCSteamHelp                          as cs_team_help,
+       UsrCases.UsrConsultationFromJooble              as consultation_from_jooble,
+       UsrCases.UsrCommunicationWithClientSpecialist   as communication_with_client_specialist,
+       UsrCases.UsrTechDocumentation                   as tech_documentation,
+       UsrCases.UsrClientSwitchedToOurOtherClient      as client_switched_to_our_other_client,
+       UsrCases.UsrRefusesToPay                        as refuses_to_pay,
+       UsrCases.UsrPausedDueToOverduePayments          as paused_due_to_overdue_payments,
+       UsrCases.UsrLowTrafficVolumes                   as low_traffic_volumes,
+       UsrCases.UsrNoMarketingBudget                   as no_marketing_budget,
+       UsrCases.UsrColumn88                            as no_budget_for_jooble,
+       UsrCases.UsrNoClientForJooble                   as no_client_for_jooble,
+       UsrCases.UsrMinimalBudgetIsTooHigh              as minimal_budget_is_too_high,
+       UsrCases.UsrSwitchedToPJA                       as switched_to_pja,
+       UsrCases.UsrColumn92                            as policy_change,
+       UsrCases.UsrChangeInTheCompany                  as change_in_the_company,
+       UsrCases.UsrRefusesToCommunicateDetails         as refuses_to_communicate_details,
+       UsrCases.UsrJooblesDecision                     as joobles_decision,
+       UsrCases.UsrColumn95                            as technical_issues
+FROM UsrCases
+         LEFT JOIN UsrCaseSubCategory ON UsrCases.UsrSubCategoryId = UsrCaseSubCategory.Id
+         LEFT JOIN UsrMainTaskinCase ON UsrCases.UsrMainTaskInCaseId = UsrMainTaskinCase.Id
+         LEFT JOIN Contact ON UsrCases.UsrOwnerinCaseId = Contact.Id
+         LEFT JOIN Contact cc ON UsrCases.UsrContactincaseId = cc.Id
+         LEFT JOIN Account ON UsrCases.UsrAccountinCaseId = Account.Id
+         LEFT JOIN UsrClientSegment ON Account.UsrSalesPotenrialId = UsrClientSegment.Id
+         LEFT JOIN Country ON Account.CountryId = Country.Id
+         LEFT JOIN UsrStageInCase ON UsrCases.UsrStageincaseId = UsrStageInCase.Id
+         LEFT JOIN UsrPriorityincase ON UsrPriorityincase.Id = UsrCases.UsrPriorityincaseId
+         LEFT JOIN Currency ON UsrCases.UsrCurrency1Id = Currency.Id
+         LEFT JOIN Currency curr_2 ON UsrCases.UsrCurrency2Id = curr_2.Id
+         LEFT JOIN UsrCategoryincase UsrInitiatedByInCases ON UsrInitiatedByInCases.Id = UsrCases.UsrCategoryId
+         LEFT JOIN (Select Activity.UsrUsrCasesId                                                           as caseid,
+                           count(distinct case when ActivityCategory.Name = 'E-mail'
+                                                 or ActivityCategory.Name = 'Письмо' then Activity.Id end)  as email_cnt,
+                           count(distinct case when ActivityCategory.Name = 'Call'
+                                                 or ActivityCategory.Name = 'Звонок' then Activity.Id end)  as call_cnt,
+                           count(distinct case when ActivityCategory.Name = 'Встреча' then Activity.Id end) as visit_cnt,
+                           count(distinct case when ActivityCategory.Name = 'Задача' then Activity.Id end)  as task_cnt
+                    FROM Activity
+                             LEFT JOIN ActivityCategory ON Activity.ActivityCategoryId = ActivityCategory.Id
+                    WHERE Activity.UsrUsrCasesId is not null
+                    Group by Activity.UsrUsrCasesId) Activities ON Activities.caseid = UsrCases.Id
+WHERE cast(UsrCases.CreatedOn as date) >= '01-01-2023'
+;

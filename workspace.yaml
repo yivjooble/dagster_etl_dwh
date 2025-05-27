@@ -1,0 +1,14 @@
+load_from:
+  # - python_module: etl_production
+  - python_module: etl_api
+  # - python_module: etl_dwh
+  # - python_module: etl_dwh_sublocation
+  # - python_module: etl_ga
+  # - python_module: etl_repstat
+  # - python_module: etl_jooble_internal
+  # - python_module: service
+  # - python_module: etl_affiliate
+  # - python_module: etl_freshdesk
+  # - python_module: etl_clickhouse
+  # - python_module: models
+  # - python_module: etl_ea_dte

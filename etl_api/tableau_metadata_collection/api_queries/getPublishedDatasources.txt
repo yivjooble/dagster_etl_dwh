@@ -1,0 +1,27 @@
+query getPublishedDatasources {
+  publishedDatasources {
+    id 
+    name
+    luid
+    projectName
+    owner {
+        name
+    }
+    projectVizportalUrlId
+    vizportalUrlId
+    extractLastRefreshTime
+    extractLastIncrementalUpdateTime
+    extractLastUpdateTime
+    downstreamWorkbooks {
+        id
+        name
+        luid
+        projectName 
+        owner {
+            name
+        }
+        projectVizportalUrlId
+        vizportalUrlId
+    }
+  }
+}

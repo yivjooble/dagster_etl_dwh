@@ -1,0 +1,24 @@
+query getEmbeddedDatasources {
+  embeddedDatasources {
+    id 
+    name 
+    extractLastRefreshTime
+    extractLastIncrementalUpdateTime
+    extractLastUpdateTime
+    workbook {
+      id
+      name
+      luid
+      projectName 
+      owner {
+          name
+      }
+      projectVizportalUrlId
+      vizportalUrlId
+    }
+    upstreamDatasources {
+      id
+      name
+    }
+  }
+}

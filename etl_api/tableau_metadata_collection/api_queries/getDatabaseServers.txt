@@ -1,0 +1,8 @@
+query getDatabaseServers {
+  databaseServers {
+    name
+    database_hostname: hostName
+    database_id: id
+    connectionType
+  }
+}

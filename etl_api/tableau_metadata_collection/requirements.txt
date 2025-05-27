@@ -1,0 +1,9 @@
+pandas
+numpy
+sqlalchemy==1.4.19
+sql-metadata==2.3.0
+tableau-api-lib==0.1.28
+psycopg2==2.9.1
+xmltodict
+slack-sdk
+python-dotenv

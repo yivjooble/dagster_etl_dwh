@@ -1,0 +1,171 @@
+import os
+import pandas as pd
+import gzip
+import pickle
+
+from datetime import datetime, timedelta
+from typing import List
+
+from dagster import (
+    op,
+    job,
+    fs_io_manager,
+    make_values_resource,
+    Field,
+    In,
+    Out,
+    DynamicOut,
+    DynamicOutput
+)
+
+# project import
+from ..utils.io_manager_path import get_io_manager_path
+# module import
+from ..utils.messages import send_dwh_alert_slack_message
+from ..utils.prod_job_config import retry_policy, job_config
+from ..utils.prod_sqlinstances import SqlInstanceList, map_country_code_to_id, all_countries_list
+from ..utils.prod_db_operations import start_query_on_prod_db
+from ..utils.date_format_settings import get_datediff
+from ..utils.dwh_db_operations import save_to_dwh, delete_data_from_dwh_table
+from ..utils.utils import delete_pkl_files, map_country_to_id
+from ..utils.messages import send_dwh_alert_slack_message
+
+
+
+TABLE_NAME = "email_agg_daily"
+SCHEMA = "email"
+DELETE_DATE_DIFF_COLUMN = "action_date"
+DELETE_COUNTRY_COLUMN = "country_id"
+YESTERDAY_DATE = (datetime.now().date() - timedelta(1)).strftime('%Y-%m-%d')
+PATH_TO_DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+
+
+
+@op(out=Out(str))
+def email_agg_daily_get_sql_query(context) -> str:
+    '''Get sql query from .sql file.'''
+    path_to_query = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.path.join("sql", f"{TABLE_NAME}.sql"))
+    with open(path_to_query, 'r') as query:
+        q = query.read()
+    context.log.info('Loaded SQL query')
+    return q
+
+
+@op(out=DynamicOut(), 
+    required_resource_keys={'globals'})
+def email_agg_daily_get_sqlinstance(context, query):
+    '''
+    Loop over prod sql instances and create output dictinary with data to start on separate instance.
+    Args: sql_query.
+    Output: sqlinstance, db, query.
+    '''
+    # delete previously stored data
+    delete_pkl_files(context, PATH_TO_DATA) 
+
+    launch_countries = context.resources.globals["reload_countries"]
+    date_range = pd.date_range(pd.to_datetime(context.resources.globals["reload_date_start"]), pd.to_datetime(context.resources.globals["reload_date_end"]))
+
+    context.log.info('Getting SQL instances...\n'
+                     f'Selected  countries: {launch_countries}\n'
+                     f'Start loading data for: [{context.resources.globals["reload_date_start"]}]/-/[{context.resources.globals["reload_date_end"]}]'
+                     )
+    
+    # iterate over sql instances
+    for sql_instance in SqlInstanceList:
+        for country_db in sql_instance['CountryList']:
+            # filter if custom countries
+            for launch_country in launch_countries:
+                if str(country_db).lower() in str(launch_country).strip('_').lower():
+                    # add country_id
+                    for country_name, country_id in map_country_code_to_id.items():
+                        if str(launch_country).strip('_').lower() in country_name:
+                            #  'to_sqlcode' > will pass any value to .sql file which starts with it
+                            yield DynamicOutput(
+                                value={'sql_instance': sql_instance, 
+                                       'country_db': country_db, 
+                                       'country_id': country_id, 
+                                       'query': query,
+                                       'date_range': date_range,
+                                       },
+                                mapping_key='Job_'+country_db
+                            )
+
+
+@op(out=Out(list), retry_policy=retry_policy)
+def email_agg_daily_query_on_db(context, sql_instance_country_query: dict) -> list:
+    '''
+    Launch query on each instance.
+    '''
+    pathes = []
+    for date in sql_instance_country_query['date_range']:
+        sql_instance_country_query['to_sqlcode_date_int'] = get_datediff(date.strftime('%Y-%m-%d'))
+        sql_instance_country_query['to_sqlcode_date_date'] = date.strftime('%Y-%m-%d')
+        file_path = start_query_on_prod_db(context, PATH_TO_DATA, TABLE_NAME, sql_instance_country_query)
+        pathes.append(file_path)
+        
+    return pathes
+
+
+@op(ins={"file_paths": In(List)},
+    required_resource_keys={'globals'})
+def email_agg_daily_delete_history_data(context, **kwargs):
+
+    launch_countries = context.resources.globals["reload_countries"]
+    # if 'datediff' or 'date' format
+
+    date_range = pd.date_range(pd.to_datetime(context.resources.globals["reload_date_start"]), pd.to_datetime(context.resources.globals["reload_date_end"]))
+
+    launch_countries_id_list = map_country_to_id(map_country_code_to_id, launch_countries)
+    # Convert list of integers to string
+    id_list = ', '.join(map(str, launch_countries_id_list))  
+
+    for date in date_range:
+        delete_date = date.strftime('%Y-%m-%d')
+        delete_data_from_dwh_table(context, SCHEMA, TABLE_NAME, DELETE_COUNTRY_COLUMN, DELETE_DATE_DIFF_COLUMN, launch_countries, delete_date, delete_date, id_list)
+
+
+
+@op(required_resource_keys={'globals'})
+def email_agg_daily_save_df_to_dwh(context, file_paths, delete):
+    try:
+        all_dfs_list = []
+        for f in file_paths:
+            for file_path in f:
+                if file_path.endswith(".pkl"):
+                    with gzip.open(file_path, 'rb') as f:
+                        country_df = pickle.load(f)
+                        all_dfs_list.append(country_df)
+                        context.log.info(f'df created for: {os.path.basename(file_path)}')
+        
+        # save to dwh table
+        result_df = pd.concat(all_dfs_list)
+        save_to_dwh(result_df, TABLE_NAME, SCHEMA)
+        
+        countries_count = int(result_df['country_id'].nunique())
+        rows = int(result_df.shape[0])
+        send_dwh_alert_slack_message(f":add: *{SCHEMA}.{TABLE_NAME}*\n"
+                                        f">*[{context.resources.globals['reload_date_start']}]/-/[{context.resources.globals['reload_date_end']}]:* " 
+                                        f"{countries_count} *countries* & {rows} *rows*"
+                                        )
+        context.log.info('Successfully saved df to dwh.')
+    except Exception as e:
+        send_dwh_alert_slack_message(f":error_alert: saving to dwh error: *{TABLE_NAME}* <!subteam^S02ETK2JYLF|dwh.analysts>")
+        context.log.error(f'saving to dwh error: {e}')
+        raise e
+
+
+
+@job(config=job_config,
+     resource_defs={"globals": make_values_resource(reload_countries=Field(list, default_value=all_countries_list),
+                                                    reload_date_start=Field(str, default_value=YESTERDAY_DATE),
+                                                    reload_date_end=Field(str, default_value=YESTERDAY_DATE),
+                                                    ),
+                    "io_manager": fs_io_manager.configured({"base_dir": f"{get_io_manager_path()}"})},
+    name='prd__'+TABLE_NAME,
+    description=f'{SCHEMA}.{TABLE_NAME}')
+def email_agg_daily_job():
+    query = email_agg_daily_get_sql_query()
+    instances = email_agg_daily_get_sqlinstance(query)
+    file_paths = instances.map(email_agg_daily_query_on_db).collect()
+    delete = email_agg_daily_delete_history_data(file_paths)
+    email_agg_daily_save_df_to_dwh(file_paths, delete)

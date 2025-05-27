@@ -1,0 +1,29 @@
+query getDatabaseTables {
+  databaseTables {
+      id
+      name
+      fullName
+      schema
+      connectionType
+      database {
+        id
+        __typename
+        name
+      }
+      queries: referencedByQueries {
+        queryID: id
+      }
+      columns {
+        referencedByFields {
+          datasource {
+            ... on PublishedDatasource {
+              publishedDatasourceId: id
+            }
+            ... on EmbeddedDatasource {
+              embeddedDatasourceId: id
+            }
+          }
+        }
+      }
+  }
+}

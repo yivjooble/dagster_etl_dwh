@@ -1,0 +1,1 @@
+call public.sync_session_click_primary_click_with_mssql(%s);

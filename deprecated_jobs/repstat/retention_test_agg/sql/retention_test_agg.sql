@@ -1,0 +1,1 @@
+call an.prc_retention_test_agg(%s,%s,%s);

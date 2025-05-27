@@ -1,0 +1,1 @@
+call an.insert_freecv_main_metrics(%s,%s);

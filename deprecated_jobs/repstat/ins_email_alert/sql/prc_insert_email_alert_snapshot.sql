@@ -1,0 +1,1 @@
+call an.prc_insert_email_alert_snapshot();

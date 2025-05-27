@@ -1,0 +1,1 @@
+ call affiliate.p_insert_account_metrics_agg();

@@ -1,0 +1,1 @@
+call public.sync_duplicate_events_marking_with_mssql(%s);

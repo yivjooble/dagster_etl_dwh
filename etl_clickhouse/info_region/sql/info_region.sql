@@ -1,0 +1,22 @@
+select id,
+       name,
+       order_value,
+       is_city,
+       is_toplevel,
+       seo_order,
+       display_name,
+       query_name,
+       id_language,
+       "Name_D",
+       pretext,
+       google_weight,
+       google_code,
+       name_encode,
+       is_group,
+       id_geo_rgn,
+       id_geo_city,
+       is_allow_noparent,
+       id_level,
+       autocomplete
+from link_dbo.info_region
+;

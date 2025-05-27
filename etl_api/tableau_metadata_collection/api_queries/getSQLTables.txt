@@ -1,0 +1,29 @@
+query getSQLTables {
+  customSQLTables {
+      id
+      query
+      name
+      connectionType
+      database {
+        id
+        __typename
+        name
+      }
+      tables {
+        name: fullName
+        schema
+      }
+      columns {
+        referencedByFields {
+          datasource {
+            ... on PublishedDatasource {
+              publishedDatasourceId: id
+            }
+            ... on EmbeddedDatasource {
+              embeddedDatasourceId: id
+            }
+          }
+        }
+      }
+  }
+}
