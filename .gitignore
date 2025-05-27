@@ -177,7 +177,7 @@ cython_debug/
 # Poetry local configuration file - https://python-poetry.org/docs/configuration/#local-configuration
 poetry.toml
 
-*.pickle
+/Users/yiv/Documents/01_jooble/jules/dagster_etl_dwh/etl_api/postmaster/token.pickle
 
 # ruff
 .ruff_cache/
