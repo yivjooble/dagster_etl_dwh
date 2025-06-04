@@ -223,8 +223,6 @@ def get_creds_from_vault(key):
     @cached(cache=TTLCache(maxsize=MAX_CACHE_SIZE, ttl=CACHE_TTL))
     def get_cached_secret(secret_key, vault_url, vault_token, secret_path):
         """Cache secrets to reduce load on Vault server"""
-        # Create session with connection pooling and retry strategy
-        session = requests.Session()
         retry_strategy = Retry(
             total=MAX_RETRIES,
             backoff_factor=RETRY_BACKOFF_FACTOR,
@@ -236,48 +234,53 @@ def get_creds_from_vault(key):
             pool_maxsize=POOL_MAXSIZE,
             max_retries=retry_strategy
         )
-        session.mount("http://", adapter)
-        session.mount("https://", adapter)
+        with requests.Session() as session:
+            session.mount("http://", adapter)
+            session.mount("https://", adapter)
 
-        # Create HVAC client with custom session
-        client = hvac.Client(
-            url=vault_url,
-            token=vault_token,
-            session=session
-        )
+            # Create HVAC client with custom session
+            client = hvac.Client(
+                url=vault_url,
+                token=vault_token,
+                session=session
+            )
 
-        # Attempt to fetch the secret with retries
-        for attempt in range(MAX_RETRIES):
-            try:
-                # Verify authentication - with timeout to prevent hanging
-                if not client.is_authenticated():
-                    raise Exception("Client authentication with Vault failed")
+            # Attempt to fetch the secret with retries
+            for attempt in range(MAX_RETRIES):
+                try:
+                    # Verify authentication - with timeout to prevent hanging
+                    if not client.is_authenticated():
+                        raise Exception("Client authentication with Vault failed")
 
-                # Read secret - with timeout to prevent hanging
-                read_response = client.secrets.kv.v1.read_secret(
-                    path=secret_path,
-                    mount_point='secret'
-                )
+                    # Read secret - with timeout to prevent hanging
+                    read_response = client.secrets.kv.v1.read_secret(
+                        path=secret_path,
+                        mount_point='secret'
+                    )
 
-                secret_data = read_response['data']
-                if secret_key not in secret_data:
-                    raise Exception(f"Secret key '{secret_key}' not found in Vault at path '{secret_path}'")
+                    secret_data = read_response['data']
+                    if secret_key not in secret_data:
+                        raise Exception(
+                            f"Secret key '{secret_key}' not found in Vault at path '{secret_path}'"
+                        )
 
-                return secret_data[secret_key]
+                    return secret_data[secret_key]
 
-            except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
-                # Connection or timeout errors should be retried with backoff
-                if attempt < MAX_RETRIES - 1:
-                    sleep_time = RETRY_BACKOFF_FACTOR * (2 ** attempt)
-                    time.sleep(sleep_time)
-                else:
-                    raise Exception(f"Failed to connect to Vault server after {MAX_RETRIES} attempts: {str(e)}")
-            except Exception as e:
-                # For other exceptions, retry only a few times with longer backoff
-                if attempt < 2:  # Only retry non-connection errors twice
-                    time.sleep(RETRY_BACKOFF_FACTOR * (2 ** (attempt + 2)))  # Longer backoff
-                else:
-                    raise Exception(f"Failed to retrieve secret from Vault: {str(e)}")
+                except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+                    # Connection or timeout errors should be retried with backoff
+                    if attempt < MAX_RETRIES - 1:
+                        sleep_time = RETRY_BACKOFF_FACTOR * (2 ** attempt)
+                        time.sleep(sleep_time)
+                    else:
+                        raise Exception(
+                            f"Failed to connect to Vault server after {MAX_RETRIES} attempts: {str(e)}"
+                        )
+                except Exception as e:
+                    # For other exceptions, retry only a few times with longer backoff
+                    if attempt < 2:  # Only retry non-connection errors twice
+                        time.sleep(RETRY_BACKOFF_FACTOR * (2 ** (attempt + 2)))  # Longer backoff
+                    else:
+                        raise Exception(f"Failed to retrieve secret from Vault: {str(e)}")
 
     # Vault connection parameters
     vault_url = 'http://10.0.2.155:8205'
